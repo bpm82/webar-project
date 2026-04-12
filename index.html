@@ -9,15 +9,10 @@
 <body style="margin: 0; overflow: hidden;">
   
   <script>
-    // 1. URLからパラメータを取得する
+    // 1. URLからパラメータを取得してパスを作る
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // '?id=xxx' または '?model=xxx' どちらでも受け取れるようにする
-    // 何も指定がない場合は 'test' フォルダを読み込む（とりあえずカメラが立ち上がるように）
     const targetId = urlParams.get('id') || urlParams.get('model') || 'test';
-
-    // 2. 読み込むパスを生成する
-    // 今回の構成： assets/{targetId}/model.glb と pattern.patt
+    
     const modelPath = `./assets/${targetId}/model.glb`;
     const markerPath = `./assets/${targetId}/pattern.patt`;
 
@@ -25,24 +20,29 @@
     console.log(`Loading Marker: ${markerPath}`);
   </script>
 
-  <a-scene embedded arjs="debugUIEnabled: false;">
-    
-    <a-marker id="ar-marker" type="pattern" url="">
-      <a-entity id="ar-model" gltf-model="" scale="1 1 1" position="0 0 0"></a-entity>
-    </a-marker>
-
+  <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // 5. HTML要素が読み込まれた後に、a-markerとa-entityの属性を書き換える
+    // 3. 画面の準備ができたら、マーカーとモデルを作ってシーンに投入する
     document.addEventListener('DOMContentLoaded', () => {
-      const markerEl = document.getElementById('ar-marker');
-      const modelEl = document.getElementById('ar-model');
+      const sceneEl = document.getElementById('ar-scene');
 
-      // 属性を更新して読み込みを開始
-      markerEl.setAttribute('url', markerPath);
-      modelEl.setAttribute('gltf-model', modelPath);
+      // マーカー要素を生成してパスを設定
+      const markerEl = document.createElement('a-marker');
+      markerEl.setAttribute('type', 'pattern');
+      markerEl.setAttribute('url', markerPath); // 最初から正しいパスが入る！
+
+      // モデル要素を生成してパスを設定
+      const modelEl = document.createElement('a-entity');
+      modelEl.setAttribute('gltf-model', modelPath); // 最初から正しいパスが入る！
+      modelEl.setAttribute('scale', '1 1 1');
+      modelEl.setAttribute('position', '0 0 0');
+
+      // マーカーの中にモデルを入れ、シーンの中にマーカーを入れる
+      markerEl.appendChild(modelEl);
+      sceneEl.appendChild(markerEl);
     });
   </script>
 
