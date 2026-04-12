@@ -1,24 +1,50 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <title>WebAR Project</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  <title>花ARテスト</title>
 </head>
-<body style="margin: 0; overflow: hidden">
-  <a-scene embedded arjs vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;">
+<body style="margin: 0; overflow: hidden;">
+  
+  <script>
+    // 1. URLからパラメータを取得する
+    const urlParams = new URLSearchParams(window.location.search);
     
-    <a-assets>
-      <a-asset-item id="flower" src="./flower.glb"></a-asset-item>
-    </a-assets>
+    // '?id=xxx' または '?model=xxx' どちらでも受け取れるようにする
+    // 何も指定がない場合は 'test' フォルダを読み込む（とりあえずカメラが立ち上がるように）
+    const targetId = urlParams.get('id') || urlParams.get('model') || 'test';
 
-    <a-marker type="pattern" url="./pattern-flower.patt">
-      <a-entity gltf-model="#flower"></a-entity>
+    // 2. 読み込むパスを生成する
+    // 今回の構成： assets/{targetId}/model.glb と pattern.patt
+    const modelPath = `./assets/${targetId}/model.glb`;
+    const markerPath = `./assets/${targetId}/pattern.patt`;
+
+    console.log(`Loading Model: ${modelPath}`);
+    console.log(`Loading Marker: ${markerPath}`);
+  </script>
+
+  <a-scene embedded arjs="debugUIEnabled: false;">
+    
+    <a-marker id="ar-marker" type="pattern" url="">
+      <a-entity id="ar-model" gltf-model="" scale="1 1 1" position="0 0 0"></a-entity>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
+
+  <script>
+    // 5. HTML要素が読み込まれた後に、a-markerとa-entityの属性を書き換える
+    document.addEventListener('DOMContentLoaded', () => {
+      const markerEl = document.getElementById('ar-marker');
+      const modelEl = document.getElementById('ar-model');
+
+      // 属性を更新して読み込みを開始
+      markerEl.setAttribute('url', markerPath);
+      modelEl.setAttribute('gltf-model', modelPath);
+    });
+  </script>
+
 </body>
 </html>
