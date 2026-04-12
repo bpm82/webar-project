@@ -9,8 +9,10 @@
 <body style="margin: 0; overflow: hidden;">
   
   <script>
-    // 1. URLからパラメータを取得してパスを作る
+    // URLからパラメータを取得してパスを作る
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // ↓ここを 'wineglass' から 'test' に戻しました！
     const targetId = urlParams.get('id') || urlParams.get('model') || 'test';
     
     const modelPath = `./assets/${targetId}/model.glb`;
@@ -25,26 +27,31 @@
   </a-scene>
 
   <script>
-    // 3. 画面の準備ができたら、マーカーとモデルを作ってシーンに投入する
+    // A-Frameの初期化完了を待つ
     document.addEventListener('DOMContentLoaded', () => {
-      const sceneEl = document.getElementById('ar-scene');
+      setTimeout(() => {
+        const sceneEl = document.getElementById('ar-scene');
 
-      // マーカー要素を生成してパスを設定
-      const markerEl = document.createElement('a-marker');
-      markerEl.setAttribute('type', 'pattern');
-      markerEl.setAttribute('url', markerPath); // 最初から正しいパスが入る！
+        // マーカー要素を生成
+        const markerEl = document.createElement('a-marker');
+        markerEl.setAttribute('type', 'pattern');
+        markerEl.setAttribute('url', markerPath); 
+        markerEl.setAttribute('emitevents', 'true');
 
-      // モデル要素を生成してパスを設定
-      const modelEl = document.createElement('a-entity');
-      modelEl.setAttribute('gltf-model', modelPath); // 最初から正しいパスが入る！
-      modelEl.setAttribute('scale', '1 1 1');
-      modelEl.setAttribute('position', '0 0 0');
+        // モデル要素を生成
+        const modelEl = document.createElement('a-entity');
+        modelEl.setAttribute('gltf-model', modelPath); 
+        modelEl.setAttribute('scale', '1 1 1');
+        modelEl.setAttribute('position', '0 0 0');
+        modelEl.setAttribute('rotation', '0 0 0');
 
-      // マーカーの中にモデルを入れ、シーンの中にマーカーを入れる
-      markerEl.appendChild(modelEl);
-      sceneEl.appendChild(markerEl);
+        // マーカーの中にモデルを入れ、シーンの中にマーカーを入れる
+        markerEl.appendChild(modelEl);
+        sceneEl.appendChild(markerEl);
+
+        console.log('Marker and model added to scene');
+      }, 500); // 0.5秒待つ
     });
   </script>
-
 </body>
 </html>
