@@ -9,4 +9,4 @@ https://jeromeetienne.github.io/AR.js/three.js/examples/marker-training/examples
 フォルダー作るときにファイルが何もないと作れない
 
 【モデル名】＝フォルダー名
-中のやつはmodel.glb,pattern.pattに統一
+中のやつはmodel.glb,pattern.pattに統一,arのqrコードも載せる。
