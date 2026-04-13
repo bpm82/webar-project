@@ -1,12 +1,41 @@
 # webar-project
 
-URL（例）
-https://bpm82.github.io/webar-project/?id=【モデル名】
+[cite_start]A-FrameとAR.jsを利用した、専用アプリ不要でスマホのWebブラウザから手軽に体験できるARプロジェクトです [cite: 1]。
 
-AR.js Marker Training
+## 🔗 URLの仕組みとアクセス方法
+
+[cite_start]ベースURLの末尾に `?id=【モデル名】` のパラメータをつけることで、指定したモデルを動的に呼び出します [cite: 7]。
+
+* [cite_start]**アクセスURL（例）**: `https://bpm82.github.io/webar-project/?id=【モデル名】` [cite: 82]
+* [cite_start]※【モデル名】は、後述の `assets` 内のフォルダ名と完全に連動しています [cite: 80]。
+
+## 📁 ディレクトリ・ファイル構成と追加ルール
+
+[cite_start]新しいモデルを追加する際は、`assets` フォルダ内に新しい【モデル名】のフォルダを作成し、以下の **3点セット** を必ず同じ名前で格納してください [cite: 83, 93]。
+
+1.  [cite_start]`model.glb` （3Dモデル本体） [cite: 31, 92]
+2.  [cite_start]`pattern.patt` （ARマーカーファイル） [cite: 31, 92]
+3.  [cite_start]`qr.png` など （読み込み用QRコード画像） [cite: 92]
+
+### ⚠️ GitHubでのフォルダ作成に関する注意
+[cite_start]GitHubの仕様上、中身が空のフォルダは作成・保存できません [cite: 13, 83][cite_start]。Web画面から新規フォルダを作成する場合は、`assets/【モデル名】/.keep` などのダミーファイル名を入力して一度フォルダ枠を確保してから、実データをアップロードしてください [cite: 23, 24, 83]。
+
+## 🛠️ マーカーの作成 (AR.js Marker Training)
+
+ARマーカー（.patt ファイル）の生成は以下の公式ジェネレーターを使用します。
 https://jeromeetienne.github.io/AR.js/three.js/examples/marker-training/examples/generator.html
 
-フォルダー作るときにファイルが何もないと作れない
+## 🧊 Blenderからのモデル書き出し（エクスポート）ルール
 
-【モデル名】＝フォルダー名
-中のやつはmodel.glb,pattern.pattに統一,arのqrコードも載せる。
+[cite_start]ARで表示されない、またはファイルサイズが異常に小さい（例：176バイトで空っぽになる）場合は、Blenderの書き出し設定で以下を徹底してください [cite: 41, 45, 84]。
+
+1.  [cite_start]書き出す対象のオブジェクトをクリックして「選択（オレンジ色のフチドリ）状態」にする [cite: 45, 84]。
+2.  [cite_start]エクスポート設定で**「モディファイアーを適用」**に必ずチェックを入れる（厚みや丸みをつけている場合） [cite: 49, 84]。
+3.  [cite_start]フォーマットは `glTF バイナリ (.glb)` でエクスポートする [cite: 43, 84]。
+4.  [cite_start]書き出し後、PC上でファイルサイズが数KB〜数MBあるか確認してからGitHubへアップロードする [cite: 43, 84]。
+
+## ⚠️ よくあるトラブルと仕様
+
+* [cite_start]**モデルが寝てしまう場合**: Blender（Z軸が上）とWebAR（Y軸が上）で座標系のルールが異なるためです [cite: 59, 84, 86][cite_start]。現状は `rotation="0 0 0"` で設定していますが、もし倒れる場合はHTML内のプログラムで `rotation="-90 0 0"` などに設定して強制的に起こしてください [cite: 68, 84, 86, 87][cite_start]。スマホで反映されない場合は、キャッシュが悪さをしているため、URLの末尾に `&v=2` 等をつけてアクセスし直してください [cite: 70, 84]。
+* [cite_start]**「動作と方向へのアクセスを求めています」の許可 (iOS)**: スマホの傾き（ジャイロセンサー）を検知し、空間の立体感や安定性を保つための必須機能です [cite: 74, 84][cite_start]。ワークショップ時は、お客さんに必ず「許可」を押してもらうよう案内してください [cite: 78, 84]。
+* [cite_start]**個人情報の保護**: ワークショップ等でお客さんが作ったモデルをアップロードする際、フォルダ名（モデル名）やテクスチャに本名（フルネーム等）は使用しないでください（連番やニックネーム推奨） [cite: 84, 90]。
