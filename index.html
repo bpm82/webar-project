@@ -12,8 +12,13 @@
     // URLからパラメータを取得してパスを作る
     const urlParams = new URLSearchParams(window.location.search);
     
-    // ↓ここを 'wineglass' から 'test' に戻しました！
-    const targetId = urlParams.get('id') || urlParams.get('model') || 'test';
+    // id パラメータが必須
+    const targetId = urlParams.get('id') || urlParams.get('model');
+    
+    if (!targetId) {
+      console.error('Error: id または model パラメータが指定されていません');
+      document.body.innerHTML = '<h1>Error: id parameter is required</h1>';
+    }
     
     const modelPath = `./assets/${targetId}/model.glb`;
     const markerPath = `./assets/${targetId}/pattern.patt`;
