@@ -24,10 +24,10 @@ def setup_ar_folder(folder_name):
     black_rgb = (0, 0, 0)
 
     qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=15,
-        border=1,
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=2,
     )
     qr.add_data(target_url)
     qr.make(fit=True)
