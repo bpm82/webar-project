@@ -1,0 +1,101 @@
+name: Generate QR Code
+
+on:
+  push:
+    paths:
+      - 'assets/**'
+    branches:
+      - main
+
+jobs:
+  generate-qr:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install qrcode pillow
+
+      - name: Generate QR codes for new asset IDs
+        run: |
+          import os
+          import qrcode
+          from PIL import Image
+          import subprocess
+          
+          # Get list of changed files
+          result = subprocess.run(
+              ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'],
+              capture_output=True,
+              text=True
+          )
+          changed_files = result.stdout.strip().split('\n')
+          
+          # Extract new asset IDs
+          asset_ids = set()
+          for file in changed_files:
+              if file.startswith('assets/') and '/' in file[7:]:
+                  asset_id = file.split('/')[1]
+                  if asset_id and asset_id != '.gitkeep':
+                      asset_ids.add(asset_id)
+          
+          # Also check for new directories
+          if os.path.isdir('assets'):
+              for item in os.listdir('assets'):
+                  item_path = os.path.join('assets', item)
+                  if os.path.isdir(item_path):
+                      qr_file = os.path.join(item_path, f'{item}.png')
+                      if not os.path.exists(qr_file):
+                          asset_ids.add(item)
+          
+          # Generate QR codes
+          for asset_id in sorted(asset_ids):
+              asset_dir = os.path.join('assets', asset_id)
+              os.makedirs(asset_dir, exist_ok=True)
+              
+              target_url = f"https://bpm82.github.io/nomark-webar-project/?id={asset_id}"
+              blue_rgb = (0, 0, 0)
+              
+              qr = qrcode.QRCode(
+                  version=None,
+                  error_correction=qrcode.constants.ERROR_CORRECT_L,
+                  box_size=15,
+                  border=4,
+              )
+              qr.add_data(target_url)
+              qr.make(fit=True)
+              
+              qr_img = qr.make_image(fill_color=blue_rgb, back_color="white").convert('RGB')
+              
+              border_thickness = 240
+              new_size = (qr_img.size[0] + border_thickness * 2, qr_img.size[1] + border_thickness * 2)
+              final_img = Image.new("RGB", new_size, blue_rgb)
+              final_img.paste(qr_img, (border_thickness, border_thickness))
+              
+              qr_filename = os.path.join(asset_dir, f'{asset_id}.png')
+              final_img.save(qr_filename)
+              print(f"Generated QR code: {qr_filename}")
+        shell: python
+
+      - name: Commit and push generated QR codes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if git diff --quiet; then
+            echo "No changes to commit"
+          else
+            git add assets/
+            git commit -m "ci: auto-generate QR codes for new assets"
+            git push
+          fi
