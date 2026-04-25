@@ -36,8 +36,14 @@ def setup_ar_folder(folder_name):
     patt_path = os.path.join(MARKERS_DIR, folder_name, "pattern.patt")
     create_patt_file(qr_img, patt_path)
 
-    border_thickness = 240
-    new_size = (qr_img.size[0] + border_thickness * 2, qr_img.size[1] + border_thickness * 2)
+   # 4. 外側の黒い枠を追加してフルマーカー画像を作成 (AR.js標準の0.5比率に自動調整)
+    inner_width = qr_img.size[0]
+    inner_height = qr_img.size[1]
+    
+    # 内側の画像の半分の太さを片側の黒枠にする（これで全体の幅に対して内側がちょうど50%になります）
+    border_thickness = inner_width // 2
+    new_size = (inner_width + border_thickness * 2, inner_height + border_thickness * 2)
+    
     final_img = Image.new("RGB", new_size, black_rgb)
     final_img.paste(qr_img, (border_thickness, border_thickness))
 
