@@ -9,6 +9,10 @@
 <body style="margin: 0; overflow: hidden;">
   
   <script>
+    // グローバル変数として定義
+    let modelPath = '';
+    let markerPath = '';
+
     // URLからパラメータを取得してパスを作る
     const urlParams = new URLSearchParams(window.location.search);
     
@@ -18,13 +22,13 @@
     if (!targetId) {
       console.error('Error: id または model パラメータが指定されていません');
       document.body.innerHTML = '<h1>Error: id parameter is required</h1>';
-    }
-    
-    const modelPath = `./assets/${targetId}/model.glb`;
-    const markerPath = `./assets/${targetId}/pattern.patt`;
+    } else {
+      modelPath = `./assets/${targetId}/model.glb`;
+      markerPath = `./assets/${targetId}/pattern.patt`;
 
-    console.log(`Loading Model: ${modelPath}`);
-    console.log(`Loading Marker: ${markerPath}`);
+      console.log(`Loading Model: ${modelPath}`);
+      console.log(`Loading Marker: ${markerPath}`);
+    }
   </script>
 
   <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
@@ -35,6 +39,11 @@
     // A-Frameの初期化完了を待つ
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
+        if (!modelPath || !markerPath) {
+          console.error('modelPath or markerPath is not set');
+          return;
+        }
+
         const sceneEl = document.getElementById('ar-scene');
 
         // マーカー要素を生成
