@@ -15,7 +15,9 @@
 
     // URLからパラメータを取得してパスを作る
     const urlParams = new URLSearchParams(window.location.search);
-    
+
+    console.log(`urlParams: ${urlParams}`);
+
     // id パラメータが必須
     const targetId = urlParams.get('id') || urlParams.get('model');
     
