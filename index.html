@@ -29,14 +29,55 @@
       console.log(`Loading Model: ${modelPath}`);
       console.log(`Loading Marker: ${markerPath}`);
     }
+
+    // ==========================================
+    // modelConfigs: 位置・スケール・回転の設定
+    // ==========================================
+    const modelConfigs = [
+      {
+        // メインモデル（model.glb）の設定
+        position: { x: 0, y: 3, z: 0 },
+        scale:    { x: 2, y: 2, z: 2 },
+        rotation: { x: 0, y: 180, z: 0 }  // A-Frameはラジアンではなく度数
+      },
+      {
+        // サブモデル（sub.glb）の設定 ※使用する場合は subModelPath を設定
+        position: { x: 0, y: 2, z: 0 },
+        scale:    { x: 1, y: 1, z: 1 },
+        rotation: { x: 0, y: -90, z: 0 }
+      }
+    ];
+
+    // サブモデルのパス（不要なら null にする）
+    // 例: `./assets/${targetId}/sub.glb`
+    const subModelPath = null;
   </script>
 
   <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
+
+    <!-- AmbientLight: シーン全体をうっすら照らす環境光 -->
+    <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
+
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // A-Frameの初期化完了を待つ
+    // ==========================================
+    // A-Frame カスタムコンポーネント: アニメーション付きグループ回転
+    // ==========================================
+    AFRAME.registerComponent('rotate-group', {
+      schema: {
+        speed: { type: 'number', default: 30 } // 1秒あたりの回転度数
+      },
+      tick: function (time, timeDelta) {
+        const delta = (this.data.speed * timeDelta) / 1000;
+        this.el.object3D.rotation.y += THREE.MathUtils.degToRad(delta);
+      }
+    });
+
+    // ==========================================
+    // A-Frameの初期化完了を待ってからマーカー・モデルを生成
+    // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         if (!modelPath || !markerPath) {
@@ -49,22 +90,43 @@
         // マーカー要素を生成
         const markerEl = document.createElement('a-marker');
         markerEl.setAttribute('type', 'pattern');
-        markerEl.setAttribute('url', markerPath); 
+        markerEl.setAttribute('url', markerPath);
         markerEl.setAttribute('emitevents', 'true');
 
-        // モデル要素を生成
-        const modelEl = document.createElement('a-entity');
-        modelEl.setAttribute('gltf-model', modelPath); 
-        modelEl.setAttribute('scale', '1 1 1');
-        modelEl.setAttribute('position', '0 0 0');
-        modelEl.setAttribute('rotation', '0 0 0');
+        // ==========================================
+        // グループ用エンティティ（AmbientLight + モデルを統合）
+        // rotate-group コンポーネントでアニメーション
+        // ==========================================
+        const groupEl = document.createElement('a-entity');
+        groupEl.setAttribute('id', 'flower-group');
+        groupEl.setAttribute('rotate-group', 'speed: 30'); // ゆっくり回転（不要なら削除）
 
-        // マーカーの中にモデルを入れ、シーンの中にマーカーを入れる
-        markerEl.appendChild(modelEl);
+        // ---------- メインモデル ----------
+        const cfg0 = modelConfigs[0];
+        const mainModelEl = document.createElement('a-entity');
+        mainModelEl.setAttribute('gltf-model', modelPath);
+        mainModelEl.setAttribute('position', `${cfg0.position.x} ${cfg0.position.y} ${cfg0.position.z}`);
+        mainModelEl.setAttribute('scale',    `${cfg0.scale.x} ${cfg0.scale.y} ${cfg0.scale.z}`);
+        mainModelEl.setAttribute('rotation', `${cfg0.rotation.x} ${cfg0.rotation.y} ${cfg0.rotation.z}`);
+        groupEl.appendChild(mainModelEl);
+
+        // ---------- サブモデル（subModelPath が設定されている場合のみ） ----------
+        if (subModelPath) {
+          const cfg1 = modelConfigs[1];
+          const subModelEl = document.createElement('a-entity');
+          subModelEl.setAttribute('gltf-model', subModelPath);
+          subModelEl.setAttribute('position', `${cfg1.position.x} ${cfg1.position.y} ${cfg1.position.z}`);
+          subModelEl.setAttribute('scale',    `${cfg1.scale.x} ${cfg1.scale.y} ${cfg1.scale.z}`);
+          subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
+          groupEl.appendChild(subModelEl);
+        }
+
+        // グループをマーカーに追加、マーカーをシーンに追加
+        markerEl.appendChild(groupEl);
         sceneEl.appendChild(markerEl);
 
-        console.log('Marker and model added to scene');
-      }, 500); // 0.5秒待つ
+        console.log('Marker, group, and model(s) added to scene');
+      }, 500);
     });
   </script>
 </body>
