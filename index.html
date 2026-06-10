@@ -25,7 +25,10 @@
       console.error('Error: id または model パラメータが指定されていません');
       document.body.innerHTML = '<h1>Error: id parameter is required</h1>';
     } else {
+      // レポジトリの変更によるエラーか？パスを絶対パスにしてみる。
+      // modelPath = `https://アカウント名.github.io/リポジトリ名/assets/設定したID/model.glb`
       modelPath = `./assets/${targetId}/model.glb`;
+      // markerPath = `https://アカウント名.github.io/リポジトリ名/assets/設定したID/model.glb`
       markerPath = `./assets/${targetId}/pattern.patt`;
 
       console.log(`Loading Model: ${modelPath}`);
@@ -55,7 +58,7 @@
     const subModelPath = `./assets/submodel/square_pot.glb`;
   </script>
 
-  <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
+  <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
 
     <!-- AmbientLight: シーン全体をうっすら照らす環境光 -->
     <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
@@ -94,6 +97,10 @@
         markerEl.setAttribute('type', 'pattern');
         markerEl.setAttribute('url', markerPath);
         markerEl.setAttribute('emitevents', 'true');
+        markerEl.setAttribute('smooth', 'true');        // ★追加：検出を安定させる
+        markerEl.setAttribute('smoothCount', '5');       // ★追加
+        markerEl.setAttribute('smoothTolerance', '0.01'); // ★追加
+        markerEl.setAttribute('smoothThreshold', '2');   // ★追加
 
         // ==========================================
         // グループ用エンティティ（AmbientLight + モデルを統合）
@@ -101,6 +108,7 @@
         // ==========================================
         const groupEl = document.createElement('a-entity');
         groupEl.setAttribute('id', 'flower-group');
+        groupEl.setAttribute('visible', 'false'); // ★最初は非表示
         groupEl.setAttribute('rotate-group', 'speed: 30'); // ゆっくり回転（不要なら削除）
 
         // ---------- メインモデル ----------
@@ -122,6 +130,16 @@
           subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
           groupEl.appendChild(subModelEl);
         }
+
+        markerEl.addEventListener('markerFound', () => {
+          groupEl.setAttribute('visible', 'true');
+          console.log('Marker found: showing model');
+        });
+
+        markerEl.addEventListener('markerLost', () => {
+          groupEl.setAttribute('visible', 'false');
+          console.log('Marker lost: hiding model');
+        });
 
         // グループをマーカーに追加、マーカーをシーンに追加
         markerEl.appendChild(groupEl);
