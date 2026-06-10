@@ -22,7 +22,7 @@
   </div>
 
   <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
-    <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
+    <a-light type="ambient" color="#ffffff" intensity="10.0"></a-light>
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -60,13 +60,13 @@
   </script>
 
   <script>
-    AFRAME.registerComponent('rotate-group', {
-      schema: { speed: { type: 'number', default: 30 } },
-      tick: function (time, timeDelta) {
-        const delta = (this.data.speed * timeDelta) / 1000;
-        this.el.object3D.rotation.y += THREE.MathUtils.degToRad(delta);
-      }
-    });
+    // AFRAME.registerComponent('rotate-group', {
+    //   schema: { speed: { type: 'number', default: 30 } },
+    //   tick: function (time, timeDelta) {
+    //     const delta = (this.data.speed * timeDelta) / 1000;
+    //     this.el.object3D.rotation.y += THREE.MathUtils.degToRad(delta);
+    //   }
+    // });
 
     document.addEventListener('DOMContentLoaded', () => {
 
