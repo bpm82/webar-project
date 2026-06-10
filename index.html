@@ -22,7 +22,7 @@
   </div>
 
   <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
-    <a-light type="ambient" color="#ffffff" intensity="10.0"></a-light>
+    <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -60,6 +60,7 @@
   </script>
 
   <script>
+    // アニメーション
     // AFRAME.registerComponent('rotate-group', {
     //   schema: { speed: { type: 'number', default: 30 } },
     //   tick: function (time, timeDelta) {
@@ -67,6 +68,35 @@
     //     this.el.object3D.rotation.y += THREE.MathUtils.degToRad(delta);
     //   }
     // });
+
+    // マテリアル修正の共通関数
+    function fixMaterials(modelEl) {
+      modelEl.addEventListener('model-loaded', () => {
+        console.log('model loaded, fixing materials...');
+        const mesh = modelEl.getObject3D('mesh');
+        if (!mesh) return;
+
+        mesh.traverse((object) => {
+          if (object.isMesh && object.material) {
+            object.material.metalness = 0.0;
+            object.material.roughness = 0.5;
+
+            if (object.material.map) {
+              object.material.map.colorSpace = THREE.SRGBColorSpace;
+              object.material.map.needsUpdate = true;
+            }
+
+            object.material.flatShading = false;
+            object.material.needsUpdate = true;
+
+            if (object.geometry) {
+              object.geometry.computeVertexNormals();
+            }
+          }
+        });
+        console.log('Materials fixed');
+      });
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -110,6 +140,7 @@
         mainModelEl.setAttribute('position', `${cfg0.position.x} ${cfg0.position.y} ${cfg0.position.z}`);
         mainModelEl.setAttribute('scale',    `${cfg0.scale.x} ${cfg0.scale.y} ${cfg0.scale.z}`);
         mainModelEl.setAttribute('rotation', `${cfg0.rotation.x} ${cfg0.rotation.y} ${cfg0.rotation.z}`);
+        fixMaterials(mainModelEl);
         groupEl.appendChild(mainModelEl);
 
         if (subModelPath) {
@@ -119,6 +150,7 @@
           subModelEl.setAttribute('position', `${cfg1.position.x} ${cfg1.position.y} ${cfg1.position.z}`);
           subModelEl.setAttribute('scale',    `${cfg1.scale.x} ${cfg1.scale.y} ${cfg1.scale.z}`);
           subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
+          fixMaterials(subModelEl);
           groupEl.appendChild(subModelEl);
         }
 
