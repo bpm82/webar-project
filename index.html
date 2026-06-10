@@ -114,59 +114,59 @@
         clearInterval(barInterval);
         document.getElementById('loading-bar').style.width = '100%';
         document.getElementById('loading-screen').style.display = 'none';
+
+        function setupMarker(sceneEl) {
+          const markerEl = document.createElement('a-marker');
+          markerEl.setAttribute('type', 'pattern');
+          markerEl.setAttribute('url', markerPath);
+          markerEl.setAttribute('emitevents', 'true');
+          markerEl.setAttribute('smooth', 'true');
+          markerEl.setAttribute('smoothCount', '5');
+          markerEl.setAttribute('smoothTolerance', '0.01');
+          markerEl.setAttribute('smoothThreshold', '2');
+
+          const groupEl = document.createElement('a-entity');
+          groupEl.setAttribute('id', 'flower-group');
+          groupEl.setAttribute('visible', 'false');
+          // groupEl.setAttribute('rotate-group', 'speed: 30');
+
+          // ★ パス直接指定（プリロードなし）
+          const cfg0 = modelConfigs[0];
+          const mainModelEl = document.createElement('a-entity');
+          mainModelEl.setAttribute('gltf-model', modelPath);
+          mainModelEl.setAttribute('position', `${cfg0.position.x} ${cfg0.position.y} ${cfg0.position.z}`);
+          mainModelEl.setAttribute('scale',    `${cfg0.scale.x} ${cfg0.scale.y} ${cfg0.scale.z}`);
+          mainModelEl.setAttribute('rotation', `${cfg0.rotation.x} ${cfg0.rotation.y} ${cfg0.rotation.z}`);
+          fixMaterials(mainModelEl);
+          groupEl.appendChild(mainModelEl);
+
+          if (subModelPath) {
+            const cfg1 = modelConfigs[1];
+            const subModelEl = document.createElement('a-entity');
+            subModelEl.setAttribute('gltf-model', subModelPath);
+            subModelEl.setAttribute('position', `${cfg1.position.x} ${cfg1.position.y} ${cfg1.position.z}`);
+            subModelEl.setAttribute('scale',    `${cfg1.scale.x} ${cfg1.scale.y} ${cfg1.scale.z}`);
+            subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
+            fixMaterials(subModelEl);
+            groupEl.appendChild(subModelEl);
+          }
+
+          markerEl.addEventListener('markerFound', () => {
+            groupEl.setAttribute('visible', 'true');
+            console.log('Marker found');
+          });
+          markerEl.addEventListener('markerLost', () => {
+            groupEl.setAttribute('visible', 'false');
+            console.log('Marker lost');
+          });
+
+          markerEl.appendChild(groupEl);
+          sceneEl.appendChild(markerEl);
+          console.log('setupMarker complete');
+        }
         setupMarker(sceneEl);
         console.log('setupMarker called');
       }, 2000);
-
-      function setupMarker(sceneEl) {
-        const markerEl = document.createElement('a-marker');
-        markerEl.setAttribute('type', 'pattern');
-        markerEl.setAttribute('url', markerPath);
-        markerEl.setAttribute('emitevents', 'true');
-        markerEl.setAttribute('smooth', 'true');
-        markerEl.setAttribute('smoothCount', '5');
-        markerEl.setAttribute('smoothTolerance', '0.01');
-        markerEl.setAttribute('smoothThreshold', '2');
-
-        const groupEl = document.createElement('a-entity');
-        groupEl.setAttribute('id', 'flower-group');
-        groupEl.setAttribute('visible', 'false');
-        // groupEl.setAttribute('rotate-group', 'speed: 30');
-
-        // ★ パス直接指定（プリロードなし）
-        const cfg0 = modelConfigs[0];
-        const mainModelEl = document.createElement('a-entity');
-        mainModelEl.setAttribute('gltf-model', modelPath);
-        mainModelEl.setAttribute('position', `${cfg0.position.x} ${cfg0.position.y} ${cfg0.position.z}`);
-        mainModelEl.setAttribute('scale',    `${cfg0.scale.x} ${cfg0.scale.y} ${cfg0.scale.z}`);
-        mainModelEl.setAttribute('rotation', `${cfg0.rotation.x} ${cfg0.rotation.y} ${cfg0.rotation.z}`);
-        fixMaterials(mainModelEl);
-        groupEl.appendChild(mainModelEl);
-
-        if (subModelPath) {
-          const cfg1 = modelConfigs[1];
-          const subModelEl = document.createElement('a-entity');
-          subModelEl.setAttribute('gltf-model', subModelPath);
-          subModelEl.setAttribute('position', `${cfg1.position.x} ${cfg1.position.y} ${cfg1.position.z}`);
-          subModelEl.setAttribute('scale',    `${cfg1.scale.x} ${cfg1.scale.y} ${cfg1.scale.z}`);
-          subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
-          fixMaterials(subModelEl);
-          groupEl.appendChild(subModelEl);
-        }
-
-        markerEl.addEventListener('markerFound', () => {
-          groupEl.setAttribute('visible', 'true');
-          console.log('Marker found');
-        });
-        markerEl.addEventListener('markerLost', () => {
-          groupEl.setAttribute('visible', 'false');
-          console.log('Marker lost');
-        });
-
-        markerEl.appendChild(groupEl);
-        sceneEl.appendChild(markerEl);
-        console.log('setupMarker complete');
-      }
     });
   </script>
 </body>
