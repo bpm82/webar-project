@@ -130,20 +130,19 @@
           assetsEl.appendChild(subAsset);
         }
 
-        // ★ カメラ・ARシーンの準備完了を待つ
-        sceneEl.addEventListener('camera-init', () => {
-          cameraReady = true;
-          console.log('Camera ready (camera-init)');
-          trySetupMarker();
-        });
+        function waitForCameraStream() {
+          const checkInterval = setInterval(() => {
+            const video = document.querySelector('video');
+            if (video && video.srcObject && video.readyState >= 2) {
+              clearInterval(checkInterval);
+              cameraReady = true;
+              console.log('Camera ready (video stream detected)');
+              trySetupMarker();
+            }
+          }, 300);
+        }
 
-        // ★ camera-initが来ない場合の保険
-        sceneEl.addEventListener('arjs-video-set', () => {
-          cameraReady = true;
-          console.log('Camera ready (arjs-video-set)');
-          trySetupMarker();
-        });
-
+        waitForCameraStream();
       }, 500);
 
       function setupMarker(sceneEl) {
