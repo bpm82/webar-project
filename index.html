@@ -8,6 +8,31 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
   
+  <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
+
+    <!-- ★ アセットをあらかじめ読み込んでおく -->
+    <a-assets id="ar-assets" timeout="30000">
+      <!-- JSで動的に追加するのでここは空 -->
+    </a-assets>
+
+    <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <!-- bodyの先頭に追加 -->
+  <div id="loading-screen" style="
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.75);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: white; font-family: sans-serif;
+  ">
+    <div style="font-size: 18px; margin-bottom: 12px">読み込み中...</div>
+    <div id="loading-bar-wrap" style="width:200px;height:6px;background:rgba(255,255,255,0.2);border-radius:3px">
+      <div id="loading-bar" style="height:100%;width:0%;background:white;border-radius:3px;transition:width 0.3s"></div>
+    </div>
+  </div>
+
   <script>
     // グローバル変数として定義
     let modelPath = '';
@@ -85,46 +110,64 @@
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
-        if (!modelPath || !markerPath) {
-          console.error('modelPath or markerPath is not set');
-          return;
-        }
+        if (!modelPath || !markerPath) return;
 
         const sceneEl = document.getElementById('ar-scene');
+        const assetsEl = document.getElementById('ar-assets');
 
-        // マーカー要素を生成
+        // ★ アセットシステムにGLBを登録（事前ダウンロード）
+        const mainAsset = document.createElement('a-asset-item');
+        mainAsset.setAttribute('id', 'main-model');
+        mainAsset.setAttribute('src', modelPath);
+        assetsEl.appendChild(mainAsset);
+
+        if (subModelPath) {
+          const subAsset = document.createElement('a-asset-item');
+          subAsset.setAttribute('id', 'sub-model');
+          subAsset.setAttribute('src', subModelPath);
+          assetsEl.appendChild(subAsset);
+        }
+
+        // assetsのprogressイベントでバーを更新
+        assetsEl.addEventListener('progress', (e) => {
+          const pct = Math.round((e.detail.loadedSrc / e.detail.totalSrc) * 100);
+          document.getElementById('loading-bar').style.width = pct + '%';
+        });
+
+        assetsEl.addEventListener('loaded', () => {
+          document.getElementById('loading-screen').style.display = 'none';
+          setupMarker(sceneEl);
+        });
+      }, 500);
+
+      function setupMarker(sceneEl) {
         const markerEl = document.createElement('a-marker');
         markerEl.setAttribute('type', 'pattern');
         markerEl.setAttribute('url', markerPath);
         markerEl.setAttribute('emitevents', 'true');
-        markerEl.setAttribute('smooth', 'true');        // ★追加：検出を安定させる
-        markerEl.setAttribute('smoothCount', '5');       // ★追加
-        markerEl.setAttribute('smoothTolerance', '0.01'); // ★追加
-        markerEl.setAttribute('smoothThreshold', '2');   // ★追加
+        markerEl.setAttribute('smooth', 'true');
+        markerEl.setAttribute('smoothCount', '5');
+        markerEl.setAttribute('smoothTolerance', '0.01');
+        markerEl.setAttribute('smoothThreshold', '2');
 
-        // ==========================================
-        // グループ用エンティティ（AmbientLight + モデルを統合）
-        // rotate-group コンポーネントでアニメーション
-        // ==========================================
         const groupEl = document.createElement('a-entity');
         groupEl.setAttribute('id', 'flower-group');
-        groupEl.setAttribute('visible', 'false'); // ★最初は非表示
-        groupEl.setAttribute('rotate-group', 'speed: 30'); // ゆっくり回転（不要なら削除）
+        groupEl.setAttribute('visible', 'false');
+        groupEl.setAttribute('rotate-group', 'speed: 30');
 
-        // ---------- メインモデル ----------
+        // ★ src に直接パスではなく、プリロード済みのIDを参照
         const cfg0 = modelConfigs[0];
         const mainModelEl = document.createElement('a-entity');
-        mainModelEl.setAttribute('gltf-model', modelPath);
+        mainModelEl.setAttribute('gltf-model', '#main-model'); // IDで参照
         mainModelEl.setAttribute('position', `${cfg0.position.x} ${cfg0.position.y} ${cfg0.position.z}`);
         mainModelEl.setAttribute('scale',    `${cfg0.scale.x} ${cfg0.scale.y} ${cfg0.scale.z}`);
         mainModelEl.setAttribute('rotation', `${cfg0.rotation.x} ${cfg0.rotation.y} ${cfg0.rotation.z}`);
         groupEl.appendChild(mainModelEl);
 
-        // ---------- サブモデル（subModelPath が設定されている場合のみ） ----------
         if (subModelPath) {
           const cfg1 = modelConfigs[1];
           const subModelEl = document.createElement('a-entity');
-          subModelEl.setAttribute('gltf-model', subModelPath);
+          subModelEl.setAttribute('gltf-model', '#sub-model'); // IDで参照
           subModelEl.setAttribute('position', `${cfg1.position.x} ${cfg1.position.y} ${cfg1.position.z}`);
           subModelEl.setAttribute('scale',    `${cfg1.scale.x} ${cfg1.scale.y} ${cfg1.scale.z}`);
           subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
@@ -133,21 +176,18 @@
 
         markerEl.addEventListener('markerFound', () => {
           groupEl.setAttribute('visible', 'true');
-          console.log('Marker found: showing model');
+          console.log('Marker found');
         });
-
         markerEl.addEventListener('markerLost', () => {
           groupEl.setAttribute('visible', 'false');
-          console.log('Marker lost: hiding model');
+          console.log('Marker lost');
         });
 
-        // グループをマーカーに追加、マーカーをシーンに追加
         markerEl.appendChild(groupEl);
         sceneEl.appendChild(markerEl);
-
-        console.log('Marker, group, and model(s) added to scene');
-      }, 500);
-    });
+      }    
+    }
+  );
   </script>
 </body>
 </html>
