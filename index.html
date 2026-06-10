@@ -15,7 +15,7 @@
     align-items: center; justify-content: center;
     color: white; font-family: sans-serif;
   ">
-    <div style="font-size: 18px; margin-bottom: 12px">読み込み中...</div>
+    <div id="loading-message" style="font-size: 18px; margin-bottom: 12px">読み込み中...</div>
     <div style="width:200px;height:6px;background:rgba(255,255,255,0.2);border-radius:3px">
       <div id="loading-bar" style="height:100%;width:0%;background:white;border-radius:3px;transition:width 0.3s"></div>
     </div>
@@ -76,7 +76,21 @@
         const sceneEl  = document.getElementById('ar-scene');
         const assetsEl = document.getElementById('ar-assets');
 
-        // ★ 個別ロード監視
+        // ★ 両方の完了を待つフラグ
+        let assetsReady = false;
+        let cameraReady = false;
+        let markerSetup = false; // 二重実行防止
+
+        function trySetupMarker() {
+          if (assetsReady && cameraReady && !markerSetup) {
+            markerSetup = true;
+            document.getElementById('loading-screen').style.display = 'none';
+            setupMarker(sceneEl);
+            console.log('両方ready → setupMarker実行');
+          }
+        }
+
+        // ★ アセット個別ロード監視
         const totalAssets = subModelPath ? 2 : 1;
         let loadedAssets  = 0;
 
@@ -86,8 +100,11 @@
           document.getElementById('loading-bar').style.width = pct + '%';
           console.log(`Asset loaded: ${loadedAssets}/${totalAssets}`);
           if (loadedAssets >= totalAssets) {
-            document.getElementById('loading-screen').style.display = 'none';
-            setupMarker(sceneEl);
+            assetsReady = true;
+            // アセット完了後はカメラ待ちメッセージに切り替え
+            document.getElementById('loading-message').textContent = 'カメラを許可してください...';
+            console.log('Assets ready');
+            trySetupMarker();
           }
         }
 
@@ -112,6 +129,20 @@
           });
           assetsEl.appendChild(subAsset);
         }
+
+        // ★ カメラ・ARシーンの準備完了を待つ
+        sceneEl.addEventListener('camera-init', () => {
+          cameraReady = true;
+          console.log('Camera ready (camera-init)');
+          trySetupMarker();
+        });
+
+        // ★ camera-initが来ない場合の保険
+        sceneEl.addEventListener('arjs-video-set', () => {
+          cameraReady = true;
+          console.log('Camera ready (arjs-video-set)');
+          trySetupMarker();
+        });
 
       }, 500);
 
