@@ -7,8 +7,7 @@
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
-  
-  <!-- bodyの先頭に追加 -->
+
   <div id="loading-screen" style="
     position: fixed; inset: 0; z-index: 9999;
     background: rgba(0,0,0,0.75);
@@ -17,119 +16,103 @@
     color: white; font-family: sans-serif;
   ">
     <div style="font-size: 18px; margin-bottom: 12px">読み込み中...</div>
-    <div id="loading-bar-wrap" style="width:200px;height:6px;background:rgba(255,255,255,0.2);border-radius:3px">
+    <div style="width:200px;height:6px;background:rgba(255,255,255,0.2);border-radius:3px">
       <div id="loading-bar" style="height:100%;width:0%;background:white;border-radius:3px;transition:width 0.3s"></div>
     </div>
   </div>
 
   <a-scene id="ar-scene" embedded arjs="debugUIEnabled: false;">
-
-    <!-- ★ アセットをあらかじめ読み込んでおく -->
-    <a-assets id="ar-assets" timeout="30000">
-      <!-- JSで動的に追加するのでここは空 -->
-    </a-assets>
-
+    <a-assets id="ar-assets" timeout="30000"></a-assets>
     <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // グローバル変数として定義
-    let modelPath = '';
+    let modelPath  = '';
     let markerPath = '';
 
-    // URLからパラメータを取得してパスを作る
     const urlParams = new URLSearchParams(window.location.search);
+    const targetId  = urlParams.get('id') || urlParams.get('model');
 
-    console.log(`urlParams: ${urlParams}`);
-
-    // id パラメータが必須
-    const targetId = urlParams.get('id') || urlParams.get('model');
-    
     if (!targetId) {
-      console.error('Error: id または model パラメータが指定されていません');
+      console.error('Error: id パラメータが指定されていません');
       document.body.innerHTML = '<h1>Error: id parameter is required</h1>';
     } else {
-      // レポジトリの変更によるエラーか？パスを絶対パスにしてみる。
-      // modelPath = `https://アカウント名.github.io/リポジトリ名/assets/設定したID/model.glb`
-      modelPath = `./assets/${targetId}/model.glb`;
-      // markerPath = `https://アカウント名.github.io/リポジトリ名/assets/設定したID/model.glb`
+      modelPath  = `./assets/${targetId}/model.glb`;
       markerPath = `./assets/${targetId}/pattern.patt`;
-
-      console.log(`Loading Model: ${modelPath}`);
-      console.log(`Loading Marker: ${markerPath}`);
+      console.log(`Model: ${modelPath}`);
+      console.log(`Marker: ${markerPath}`);
     }
 
-    // ==========================================
-    // modelConfigs: 位置・スケール・回転の設定
-    // ==========================================
     const modelConfigs = [
       {
-        // メインモデル（model.glb）の設定
         position: { x: 0, y: 3, z: 0 },
         scale:    { x: 2, y: 2, z: 2 },
-        rotation: { x: 0, y: 180, z: 0 }  // A-Frameはラジアンではなく度数
+        rotation: { x: 0, y: 180, z: 0 }
       },
       {
-        // サブモデル（sub.glb）の設定 ※使用する場合は subModelPath を設定
         position: { x: 0, y: 2, z: 0 },
         scale:    { x: 1, y: 1, z: 1 },
         rotation: { x: 0, y: -90, z: 0 }
       }
     ];
 
-    // サブモデルのパス（不要なら null にする）
-    // 例: `./assets/${targetId}/sub.glb`
     const subModelPath = `./assets/submodel/square_pot.glb`;
   </script>
 
   <script>
-    // ==========================================
-    // A-Frame カスタムコンポーネント: アニメーション付きグループ回転
-    // ==========================================
     AFRAME.registerComponent('rotate-group', {
-      schema: {
-        speed: { type: 'number', default: 30 } // 1秒あたりの回転度数
-      },
+      schema: { speed: { type: 'number', default: 30 } },
       tick: function (time, timeDelta) {
         const delta = (this.data.speed * timeDelta) / 1000;
         this.el.object3D.rotation.y += THREE.MathUtils.degToRad(delta);
       }
     });
 
-    // ==========================================
-    // A-Frameの初期化完了を待ってからマーカー・モデルを生成
-    // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         if (!modelPath || !markerPath) return;
 
-        const sceneEl = document.getElementById('ar-scene');
+        const sceneEl  = document.getElementById('ar-scene');
         const assetsEl = document.getElementById('ar-assets');
 
-        // ★ アセットシステムにGLBを登録（事前ダウンロード）
+        // ★ 個別ロード監視
+        const totalAssets = subModelPath ? 2 : 1;
+        let loadedAssets  = 0;
+
+        function onAssetLoaded() {
+          loadedAssets++;
+          const pct = Math.round((loadedAssets / totalAssets) * 100);
+          document.getElementById('loading-bar').style.width = pct + '%';
+          console.log(`Asset loaded: ${loadedAssets}/${totalAssets}`);
+          if (loadedAssets >= totalAssets) {
+            document.getElementById('loading-screen').style.display = 'none';
+            setupMarker(sceneEl);
+          }
+        }
+
         const mainAsset = document.createElement('a-asset-item');
         mainAsset.setAttribute('id', 'main-model');
         mainAsset.setAttribute('src', modelPath);
+        mainAsset.addEventListener('loaded', onAssetLoaded);
+        mainAsset.addEventListener('error', (e) => {
+          console.error('main-model error:', e);
+          onAssetLoaded(); // エラーでも次へ進む
+        });
         assetsEl.appendChild(mainAsset);
 
         if (subModelPath) {
           const subAsset = document.createElement('a-asset-item');
           subAsset.setAttribute('id', 'sub-model');
           subAsset.setAttribute('src', subModelPath);
+          subAsset.addEventListener('loaded', onAssetLoaded);
+          subAsset.addEventListener('error', (e) => {
+            console.error('sub-model error:', e);
+            onAssetLoaded();
+          });
           assetsEl.appendChild(subAsset);
         }
 
-        // assetsのprogressイベントでバーを更新
-        assetsEl.addEventListener('progress', (e) => {
-          const pct = Math.round((e.detail.loadedSrc / e.detail.totalSrc) * 100);
-          document.getElementById('loading-bar').style.width = pct + '%';
-        });
-
-        assetsEl.addEventListener('loaded', () => {
-          document.getElementById('loading-screen').style.display = 'none';
-          setupMarker(sceneEl);
-        });
       }, 500);
 
       function setupMarker(sceneEl) {
@@ -147,10 +130,9 @@
         groupEl.setAttribute('visible', 'false');
         groupEl.setAttribute('rotate-group', 'speed: 30');
 
-        // ★ src に直接パスではなく、プリロード済みのIDを参照
         const cfg0 = modelConfigs[0];
         const mainModelEl = document.createElement('a-entity');
-        mainModelEl.setAttribute('gltf-model', '#main-model'); // IDで参照
+        mainModelEl.setAttribute('gltf-model', '#main-model');
         mainModelEl.setAttribute('position', `${cfg0.position.x} ${cfg0.position.y} ${cfg0.position.z}`);
         mainModelEl.setAttribute('scale',    `${cfg0.scale.x} ${cfg0.scale.y} ${cfg0.scale.z}`);
         mainModelEl.setAttribute('rotation', `${cfg0.rotation.x} ${cfg0.rotation.y} ${cfg0.rotation.z}`);
@@ -159,7 +141,7 @@
         if (subModelPath) {
           const cfg1 = modelConfigs[1];
           const subModelEl = document.createElement('a-entity');
-          subModelEl.setAttribute('gltf-model', '#sub-model'); // IDで参照
+          subModelEl.setAttribute('gltf-model', '#sub-model');
           subModelEl.setAttribute('position', `${cfg1.position.x} ${cfg1.position.y} ${cfg1.position.z}`);
           subModelEl.setAttribute('scale',    `${cfg1.scale.x} ${cfg1.scale.y} ${cfg1.scale.z}`);
           subModelEl.setAttribute('rotation', `${cfg1.rotation.x} ${cfg1.rotation.y} ${cfg1.rotation.z}`);
@@ -177,9 +159,9 @@
 
         markerEl.appendChild(groupEl);
         sceneEl.appendChild(markerEl);
-      }    
-    }
-  );
+        console.log('setupMarker complete');
+      }
+    });
   </script>
 </body>
 </html>
