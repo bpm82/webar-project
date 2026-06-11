@@ -154,14 +154,14 @@
             groupEl.appendChild(subModelEl);
           }
 
-          markerEl.addEventListener('markerFound', () => {
-            groupEl.setAttribute('visible', 'true');
-            console.log('Marker found');
-          });
-          markerEl.addEventListener('markerLost', () => {
-            groupEl.setAttribute('visible', 'false');
-            console.log('Marker lost');
-          });
+          // markerEl.addEventListener('markerFound', () => {
+          //   groupEl.setAttribute('visible', 'true');
+          //   console.log('Marker found');
+          // });
+          // markerEl.addEventListener('markerLost', () => {
+          //   groupEl.setAttribute('visible', 'false');
+          //   console.log('Marker lost');
+          // });
 
           markerEl.appendChild(groupEl);
           sceneEl.appendChild(markerEl);
